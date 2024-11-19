@@ -17,13 +17,22 @@
         h1 {
             color: #007bff;
         }
+        .card {
+            width: 400px; /* Set the width of the card */
+            height: 250px; /* Set the height of the card */
+            background-image: url('./top_background_img.jpg'); /* Background image for the card */
+            background-size: cover;
+            background-position: center;
+            position: relative; /* For positioning child elements */
+            overflow: hidden; /* To prevent overflow of draggable elements */
+            border: 2px solid black; /* Border for the card */
+            border-radius: 5px; /* Rounded corners */
+        }
         .card-body {
             padding: 2rem;
-            background-color: #ffffff;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 0%;
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
             position: relative; /* Added for positioning child elements */
-            min-height: 300px; /* Set a minimum height for the card */
+            min-height: 250px; /* Set a minimum height for the card */
         }
         .draggable {
             cursor: move;
@@ -89,7 +98,8 @@
                 container.innerHTML = '';
 
                 const row = jsonData[0]; // Use the first row for the single card
-                const card = document.createElement('div');
+                const card ```html
+                = document.createElement('div');
                 card.className = 'col-md-8 mb-4';
                 card.innerHTML = `
                     <div class="card border-black border-3">
@@ -167,6 +177,7 @@
                 });
             });
         }
+    ```html
     </script>
 </body>
 </html>
