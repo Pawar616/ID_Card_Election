@@ -23,6 +23,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 0%;
             position: relative; /* Added for positioning child elements */
+            min-height: 300px; /* Set a minimum height for the card */
         }
         .draggable {
             cursor: move;
@@ -50,9 +51,9 @@
         <div class="container mt-5">
             <h1 class="text-center mb-4">ID Card Generator</h1>
             <input type="file" id="excelFile" accept=".xlsx" class="form-control mb-4" />
-            <button onclick="generateIdCards()" class="btn btn-primary mb-4">Generate ID Cards</button>
-            <div id="cardsContainer" class="row justify-content-center"></div>
-            <button onclick="printCards()" class="btn btn-info mt-4">Print Cards</button>
+            <button onclick="generateSingleCard()" class="btn btn-primary mb-4">Generate ID Card</button>
+            <div id="singleCardContainer" class="row justify-content-center mb-4"></div>
+            <button onclick="generateAllIdCards()" class="btn btn-info mt-4 hidden" id="generateAllBtn">Generate All ID Cards</button>
         </div>
     </main>
     <footer>
@@ -68,7 +69,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
-        function generateIdCards() {
+        let jsonData; // Store the Excel data globally
+
+        function generateSingleCard() {
             const file = document.getElementById('excelFile').files[0];
             if (!file) {
                 alert('Please select an Excel file');
@@ -80,19 +83,66 @@
                 const data = new Uint8Array(event.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(sheet);
+                jsonData = XLSX.utils.sheet_to_json(sheet); // Store data globally
 
-                const container = document.getElementById('cardsContainer');
+                const container = document.getElementById('singleCardContainer');
                 container.innerHTML = '';
 
-                jsonData.forEach((row, index) => {
+                const row = jsonData[0]; // Use the first row for the single card
+                const card = document.createElement('div');
+                card.className = 'col-md-8 mb-4';
+                card.innerHTML = `
+                    <div class="card border-black border-3">
+                        <div class="card-body">
+                            <div class="draggable" style="top: 10px; left: 10px;">अनु क्र: <span>${row['sr.no.']}</span></div>
+                            <div class="draggable" style="top: 50px; left: 10px;">नाव: <span>${row['name']}</span></div>
+                            <div class="draggable" style="top: 90px; left: 10px;">पोलीस स्टेशन: <span>${row['police station']}</span></div>
+                            <div class="draggable" style="top: 130px; left: 10px;">मो. नंबर: <span>${row['mobile number']}</span></div>
+                            <div class="draggable" style="top: 170px; left: 10px;">मतदान केंद्र: <span>${row['voting booth']}</span></div>
+                            <div class="draggable" style="top: 210px; left: 10px;">बंदोबस्ताचे ठिकाण: <span>${row['place']}</span></div>
+                            <div class="draggable" style="top: 250px; left: 10px;">दिनांक: <span>09/07/2024</span></div>
+                        </div>
+                    </div>`;
+                container.appendChild(card);
+
+                // Make the labels draggable
+                interact('.draggable')
+                    .draggable({
+                        listeners: {
+                            move(event) {
+                                const target = event.target;
+                                const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                                const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                                // Translate the element
+                                target.style.transform = `translate(${x}px, ${y}px)`;
+
+                                // Update the position attributes
+                                target.setAttribute('data-x', x);
+                                target.setAttribute('data-y', y);
+                            }
+                        }
+                    });
+
+                // Show the button to generate all ID cards
+                document.getElementById('generateAllBtn').classList.remove('hidden');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function generateAllIdCards() {
+            const zip = new JSZip();
+            const promises = [];
+
+            jsonData.forEach((row, index) => {
+                promises.push(new Promise((resolve) => {
                     const card = document.createElement('div');
                     card.className = 'col-md-8 mb-4';
                     card.innerHTML = `
                         <div class="card border-black border-3">
                             <div class="card-body">
                                 <div class="draggable" style="top: 10px; left: 10px;">अनु क्र: <span>${row['sr.no.']}</span></div>
-                                <div class="draggable" style="top: 50 px; left: 10px;">नाव: <span>${row['name']}</span></div>
+                                <div class="draggable" style="top: 50px; left: 10px;">नाव: <span>${row['name']}</span></div>
                                 <div class="draggable" style="top: 90px; left: 10px;">पोलीस स्टेशन: <span>${row['police station']}</span></div>
                                 <div class="draggable" style="top: 130px; left: 10px;">मो. नंबर: <span>${row['mobile number']}</span></div>
                                 <div class="draggable" style="top: 170px; left: 10px;">मतदान केंद्र: <span>${row['voting booth']}</span></div>
@@ -100,38 +150,8 @@
                                 <div class="draggable" style="top: 250px; left: 10px;">दिनांक: <span>09/07/2024</span></div>
                             </div>
                         </div>`;
-                    container.appendChild(card);
 
-                    // Make the labels draggable
-                    interact('.draggable')
-                        .draggable({
-                            listeners: {
-                                move(event) {
-                                    const target = event.target;
-                                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-                                    // Translate the element
-                                    target.style.transform = `translate(${x}px, ${y}px)`;
-
-                                    // Update the position attributes
-                                    target.setAttribute('data-x', x);
-                                    target.setAttribute('data-y', y);
-                                }
-                            }
-                        });
-                });
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        function printCards() {
-            const cards = document.querySelectorAll('.card');
-            const zip = new JSZip();
-            const promises = [];
-
-            cards.forEach((card, index) => {
-                promises.push(new Promise((resolve) => {
+                    document.body.appendChild(card); // Append to body for rendering
                     html2canvas(card).then(canvas => {
                         canvas.toBlob(blob => {
                             zip.file(`id_card_${index + 1}.png`, blob);
